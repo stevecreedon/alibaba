@@ -1,0 +1,4 @@
+adapter: mysql
+database: alibaba
+username: root
+host: localhost

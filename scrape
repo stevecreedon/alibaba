@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+require "lib/root"
+require "lib/connect"
+
+
+Connector.connect
+Root.process

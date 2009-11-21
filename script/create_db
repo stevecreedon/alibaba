@@ -8,9 +8,26 @@ ActiveRecord::Schema.define do
       create_table :links do |t|
         t.column :text, :string
         t.column :url, :string
-        t.column :page, :string
+        t.column :page_id, :integer
+      end
+      
+      create_table :titles do |t|
+        t.column :text, :string
+        t.column :page_id, :integer
+      end
+      
+      create_table :pages do |t|
+        t.column :url, :string
         t.column :scraped, :boolean 
-      end   
+      end
+      
+      create_table :headings do |t|
+        t.column :text, :string
+        t.column :size, :integer
+        t.column :page_id, :integer
+      end 
+      
+      add_index :pages, [:url]  
 end
   
 

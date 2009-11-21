@@ -1,29 +1,33 @@
 require 'rubygems'
 require 'nokogiri'
 require "lib/page"
-
-
+require "lib/heading"
+require "lib/link"
+require "lib/title"
 
 class Root
   
   def self.process
     
     domain = "alibaba.com"
-    site = "http://www.alibaba.com" 
+    site = "http://www.alibaba.com/" 
     Link.delete_all
+    Page.delete_all
+    Heading.delete_all
+    Title.delete_all
+
+    Page.create(:url => site, :scraped => false)
     
-    Link.create!(:url => site, :text => "home", :page => site)
-    
-    while(!(link = Link.next(domain)).nil?)
-      p = Page.new(link.url)
+    while(!(page = Page.next(domain)).nil?)
+      
       begin
-        p.scrape
-        link.scraped = true
-        link.save!
-        p "visited #{link.url}"
-      rescue
-        link.destroy
-        p "link #{link.url} deleted"
+        page.scrape
+        page.scraped = true
+        page.save!
+        p "visited #{page.url}"
+      rescue => e
+        page.destroy
+        p "error #{e.message} link #{page.url} deleted"
       end
       
     end

@@ -1,37 +1,52 @@
 require 'mechanize'
 require "lib/link"
 
-class Page
+class Page < ActiveRecord::Base
   
-  def initialize(url)
-    @url = url #needed because bad data has got into system
-    p "#>>#{@url}"
-  end
-  
+  has_many :links
+  has_many :headings
+  has_many :titles
+  validates_uniqueness_of :url
+
   def scrape
     
-    agent = WWW::Mechanize.new  
-    page = agent.get(@url)
-    
-    page.links.each do |link|
+    agent = WWW::Mechanize.new
+      
+    mech_page = agent.get(url)
+  
+    mech_page.links.each do |link|
       begin
         href = clean_href(link.href)
         uri = (href && URI.parse(href))
-        Link.create(:text => link.text, :page => page.uri.to_s, :url => build_url(page, link)) 
+        Link.create(:text => link.text, :page => self, :url => build_url(mech_page, link)) 
       rescue => e
         p "error: #{e.class} #{e.message}"
       end
     end
     
+    mech_page.root.css("title").each do |title|
+      Title.create!(:text => title.text, :page => self)
+    end
+    
+    (1..6).each do |size|
+      mech_page.root.css("h#{size}").each do |title|
+        Heading.create!(:text => title.text, :page => self, :size => size)
+      end
+    end
+    
   end
   
-  private 
+  def self.next(domain)
+    Page.find(:first, :conditions => ["url like ? AND scraped  = ?", "%#{domain}%", false])
+  end
   
-  def build_url(page, link)
+  private
+  
+  def build_url(mech_page, link)
      href = clean_href(link.href)
-     return page.uri.host + href if href[0] == '/'
+     return mech_page.uri.host + href if href[0] == '/'
      return href if href[0, 4] == 'http'
-     return page.uri.to_s.gsub(/[^\/]*$/, "") + href
+     return mech_page.uri.to_s.gsub(/[^\/]*$/, "") + href
   end
   
   def clean_href(href)
